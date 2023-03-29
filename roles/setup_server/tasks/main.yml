@@ -1,0 +1,164 @@
+---
+
+- name: "Create directory for all OpenVPN configurations"
+  file:
+    path: "/opt/docker_openvpn"
+    state: directory
+    mode: 0700
+
+- name: "Create directory for {{ openvpn_server.name }} OpenVPN files"
+  file:
+    path: "/opt/docker_openvpn/{{ openvpn_server.name }}"
+    state: directory
+    mode: 0700
+
+- name: "Create directory for {{ openvpn_server.name }} OpenVPN client specific overrides"
+  file:
+    path: "/opt/docker_openvpn/{{ openvpn_server.name }}/ccd"
+    state: directory
+    mode: 0755
+
+- name: "Create directory for {{ openvpn_server.name }} OpenVPN keys and certs"
+  file:
+    path: "/opt/docker_openvpn/{{ openvpn_server.name }}/pki"
+    state: directory
+    mode: 0700
+
+- name: "Copy {{ openvpn_server.name }} OpenVPN server configuration"
+  template:
+    src: "templates/server.conf.j2"
+    dest: "/opt/docker_openvpn/{{ openvpn_server.name }}/server.conf"
+    mode: 0600
+  register: openvpn_server_config_template
+
+- name: "OpenVPN PKI tasks"
+  block:
+  - name: "OpenVPN EasyRSA: Install EasyRSA for keys and certs generation"
+    git:
+      repo: "https://github.com/OpenVPN/easy-rsa.git"
+      dest: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa"
+      version: "v3.1.2"
+
+  - name: "OpenVPN EasyRSA: Configure EasyRSA variables"
+    template:
+      src: "templates/vars.j2"
+      dest: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3/vars"
+
+  - name: "OpenVPN EasyRSA: Initialize pki"
+    shell: "./easyrsa init-pki"
+    args:
+      chdir: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3"
+      creates: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3/pki"
+
+  - name: "OpenVPN EasyRSA: Build CA keys"
+    command: "./easyrsa --req-cn='{{ openvpn_vars.ca_cn }}' build-ca nopass"
+    args:
+      chdir: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3"
+      creates: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3/pki/private/ca.key"
+
+  - name: "OpenVPN EasyRSA: Build the DH (Diffie-Hellman) key"
+    command: "./easyrsa gen-dh"
+    args:
+      chdir: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3"
+      creates: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3/pki/dh.pem"
+
+  - name: "OpenVPN EasyRSA: Generate the server certificate/key"
+    command: "./easyrsa --req-cn={{ openvpn_server.domain }} gen-req server nopass"
+    args:
+      chdir: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3"
+      creates: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3/pki/private/server.key"
+
+  - name: "OpenVPN EasyRSA: Get the new CA to sign our server key"
+    command: "./easyrsa sign-req server server"
+    args:
+      chdir: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3"
+      creates: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3/pki/issued/server.crt"
+
+  - name: "Generate OpenVPN TLS key"
+    command: "openvpn --genkey --secret ta.key"
+    args:
+      chdir: "/opt/docker_openvpn/{{ openvpn_server.name }}/pki"
+      creates: "/opt/docker_openvpn/{{ openvpn_server.name }}/pki/ta.key"
+
+  - name: "OpenVPN EasyRSA: Generate Certificate Revocation List"
+    command: "./easyrsa gen-crl"
+    args:
+      chdir: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3"
+      creates: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3/pki/crl.pem"
+
+  - name: "Copy CA cert to domain's OpenVPN pki directory"
+    copy:
+      remote_src: yes
+      src: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3/pki/ca.crt"
+      dest: "/opt/docker_openvpn/{{ openvpn_server.name }}/pki/ca.crt"
+
+  - name: "Copy DH parameters to domain's OpenVPN pki directory"
+    copy:
+      remote_src: yes
+      src: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3/pki/dh.pem"
+      dest: "/opt/docker_openvpn/{{ openvpn_server.name }}/pki/dh.pem"
+
+  - name: "Copy server key to domain's OpenVPN pki directory"
+    copy:
+      remote_src: yes
+      src: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3/pki/private/server.key"
+      dest: "/opt/docker_openvpn/{{ openvpn_server.name }}/pki/server.key"
+
+  - name: "Copy Certificate Revocation List to domain's OpenVPN pki directory"
+    copy:
+      remote_src: yes
+      src: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3/pki/crl.pem"
+      dest: "/opt/docker_openvpn/{{ openvpn_server.name }}/pki/crl.pem"
+
+  - name: "Copy server cert to domain's OpenVPN pki directory"
+    copy:
+      remote_src: yes
+      src: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3/pki/issued/server.crt"
+      dest: "/opt/docker_openvpn/{{ openvpn_server.name }}/pki/server.crt"
+
+- name: "OpenVPN image build tasks"
+  block:
+  - name: "OpenVPN Build Files: create directory for build files"
+    file:
+      path: "/opt/docker_openvpn/build"
+      state: directory
+      mode: 0700
+
+  - name: "OpenVPN Build Files: copy startup script"
+    copy:
+      src: "files/startup"
+      dest: "/opt/docker_openvpn/build/startup"
+      mode: 0700
+
+  - name: "OpenVPN Build Files: copy Dockerfile"
+    copy:
+      src: "files/Dockerfile"
+      dest: "/opt/docker_openvpn/build/Dockerfile"
+
+  - name: Build OpenVPN image
+    community.docker.docker_image:
+      name: "docker_openvpn:latest"
+      build:
+        path: "/opt/docker_openvpn/build"
+        dockerfile: "/opt/docker_openvpn/build/Dockerfile"
+        pull: yes
+      state: present
+      source: build
+      force_source: yes
+      debug: yes
+
+- name: "Copy OpenVPN docker-compose configuration"
+  template:
+    src: "templates/docker-compose.yml"
+    dest: "/opt/docker_openvpn/{{ openvpn_server.name }}/docker-compose.yml"
+    mode: 0600
+
+- name: "Deploy OpenVPN"
+  community.docker.docker_compose:
+    project_name: "openvpn_{{ openvpn_server.name }}"
+    project_src: "/opt/docker_openvpn/{{ openvpn_server.name }}"
+    recreate: "{{ openvpn_server_config_template.changed | ternary('always', 'smart') }}"
+    pull: no
+    debug: yes
+
+...

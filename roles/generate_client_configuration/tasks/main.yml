@@ -1,0 +1,31 @@
+---
+
+- name: "Manage OpenVPN clients' configurations"
+  block:
+  - name: "Generate base client configuration"
+    template:
+      src: "templates/client.conf.base.j2"
+      dest: '/opt/docker_openvpn/{{ openvpn_server.name }}/client.conf'
+      mode: 0644
+
+  - name: "Create script for generating client OpenVPN configuration"
+    template:
+      src: "templates/gen_openvpn_conf.j2"
+      dest: '/opt/docker_openvpn/{{ openvpn_server.name }}/gen_openvpn_conf'
+      mode: 0744
+
+  - name: "Create directory for client OpenVPN configurations"
+    file:
+      path: "/opt/docker_openvpn/{{ openvpn_server.name }}/clients"
+      state: directory
+      mode: 0750
+
+  - name: Generate configurations for OpenVPN clients
+    when: item.revoked is not defined or not item.revoked
+    shell: './gen_openvpn_conf {{ item.name }} {{ item.static_ip }} "{{ item.iroute | default("") }}"'
+    args:
+      chdir: "/opt/docker_openvpn/{{ openvpn_server.name }}"
+      creates: "clients/{{ item.name }}.tar.gz"
+    loop: "{{ openvpn_clients }}"
+
+...

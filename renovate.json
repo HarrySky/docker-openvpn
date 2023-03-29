@@ -1,0 +1,12 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:base"],
+  "packageRules": [
+    {
+      "groupName": "alpine",
+      "matchDatasources": ["docker"],
+      "matchFiles": ["roles/setup_server/Dockerfile"],
+      "schedule": ["before 5pm"]
+    }
+  ]
+}

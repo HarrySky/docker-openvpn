@@ -1,0 +1,1 @@
+server ansible_host=vpn.example.org ansible_user=root

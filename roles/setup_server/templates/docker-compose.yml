@@ -1,0 +1,27 @@
+version: "3.9"
+services:
+  openvpn:
+    image: "docker_openvpn:latest"
+    container_name: "openvpn_{{ openvpn_server.name }}"
+    hostname: "openvpn_{{ openvpn_server.name }}"
+    restart: always
+    environment:
+      # Set timezone
+      TZ: "UTC"
+    volumes:
+      # Server configuration
+      - "/opt/docker_openvpn/{{ openvpn_server.name }}/server.conf:/etc/openvpn/server.conf:ro"
+      # Server keys and certs
+      - "/opt/docker_openvpn/{{ openvpn_server.name }}/pki:/etc/openvpn/pki:ro"
+      # Client specific overrides
+      - "/opt/docker_openvpn/{{ openvpn_server.name }}/ccd:/etc/openvpn/ccd:ro"
+    cap_add:
+      # Container need this capability to create tunnel
+      - NET_ADMIN
+    network_mode: host
+    logging:
+      driver: local
+      options:
+        max-size: "50m"
+        max-file: "30"
+        compress: "false"

@@ -1,0 +1,28 @@
+openvpn_server:
+  name: "test"
+  domain: "vpn.example.org"
+  port: 12345
+  network: "10.22.33.0/24"
+  device: "tun22.33"
+  # Optional other directives, set to `[]` if not used
+  other_directives:
+    # Send info that this OpenVPN server should route to home network
+    - 'push "route 192.168.123.0 255.255.255.0"'
+
+openvpn_clients:
+  - name: "pc-10.22.33.2"
+    static_ip: "10.22.33.2"
+    # This PC should route to home network
+    iroute: "192.168.123.0 255.255.255.0"
+  - name: hacked-laptop
+    static_ip: "10.22.33.3"
+    revoked: yes
+
+openvpn_vars:
+  country: "EE"
+  province: "Harjumaa"
+  city: "Tallinn"
+  org: "Random Company"
+  email: "vpn@example.org"
+  ou: "Networking"
+  ca_cn: "Test VPN CA"

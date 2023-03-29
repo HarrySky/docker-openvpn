@@ -1,0 +1,17 @@
+---
+
+# This playbook sets up OpenVPN server
+
+### USAGE:
+# ansible-playbook -i inventories/server -e "HOSTS=all" setup_server.yml -vv
+# - if sudo password is needed on server (-K flag tells Ansible to ask for password):
+# ansible-playbook -K -i inventories/server -e "HOSTS=all" setup_server.yml -vv
+
+- name: "Setup OpenVPN server"
+  hosts: "{{ HOSTS }}"
+  gather_facts: no
+  become: yes
+  roles:
+  - setup_server
+
+...

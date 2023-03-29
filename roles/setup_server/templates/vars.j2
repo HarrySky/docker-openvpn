@@ -1,0 +1,11 @@
+set_var EASYRSA_CA_EXPIRE 3650
+set_var EASYRSA_CERT_EXPIRE 3650
+set_var EASYRSA_CRL_DAYS 3650
+set_var EASYRSA_DN              "org"
+set_var EASYRSA_REQ_COUNTRY     "{{ openvpn_vars.country | default('EE', true) }}"
+set_var EASYRSA_REQ_PROVINCE    "{{ openvpn_vars.province | default('Harjumaa', true) }}"
+set_var EASYRSA_REQ_CITY        "{{ openvpn_vars.city | default('Tallinn', true) }}"
+set_var EASYRSA_REQ_ORG         "{{ openvpn_vars.org | default('Random Company', true) }}"
+set_var EASYRSA_REQ_EMAIL       "{{ openvpn_vars.email | default('vpn@example.org', true) }}"
+set_var EASYRSA_REQ_OU          "{{ openvpn_vars.ou | default('Networking', true) }}"
+set_var EASYRSA_BATCH           "yes"

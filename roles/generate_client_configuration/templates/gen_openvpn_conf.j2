@@ -1,0 +1,46 @@
+#!/bin/bash
+set -e
+
+CLIENT_NAME="$1" ; shift
+CLIENT_STATIC_IP="$1" ; shift
+# optional
+CLIENT_IROUTE="$1" ; shift
+
+if [ -z "$CLIENT_NAME" ] || [ -z "$CLIENT_STATIC_IP" ] ; then
+    echo "Usage: $0 CLIENT_NAME CLIENT_STATIC_IP [CLIENT_IROUTE]"
+    exit 1
+fi
+
+cd "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3"
+
+# Make cert expire after 10 years and with keylength of 4096 bits
+./easyrsa --keysize=4096 --days=3650 build-client-full ${CLIENT_NAME} nopass
+
+# Add static IP and iroute
+touch "/opt/docker_openvpn/{{ openvpn_server.name }}/ccd/${CLIENT_NAME}"
+echo "ifconfig-push ${CLIENT_STATIC_IP} {{ openvpn_server.network | ansible.utils.ipaddr('netmask') }}" > "/opt/docker_openvpn/{{ openvpn_server.name }}/ccd/${CLIENT_NAME}"
+echo "${CLIENT_IROUTE}" >> "/opt/docker_openvpn/{{ openvpn_server.name }}/ccd/${CLIENT_NAME}"
+chmod 644 "/opt/docker_openvpn/{{ openvpn_server.name }}/ccd/${CLIENT_NAME}"
+
+# Generate inline configuration
+CA_CERT=pki/ca.crt
+CERT_DIR=pki/issued
+KEY_DIR=pki/private
+TLS_KEY="/opt/docker_openvpn/{{ openvpn_server.name }}/pki/ta.key"
+OUTPUT_DIR="/opt/docker_openvpn/{{ openvpn_server.name }}/clients"
+BASE_CONFIG="/opt/docker_openvpn/{{ openvpn_server.name }}/client.conf"
+
+mkdir -p ${OUTPUT_DIR}
+
+(cat ${BASE_CONFIG}; \
+    printf "\n\n<ca>\n$(cat ${CA_CERT})\n</ca>\n\n"; \
+    printf "<cert>\n$(cat ${CERT_DIR}/${CLIENT_NAME}.crt)\n</cert>\n\n"; \
+    printf "<key>\n$(cat ${KEY_DIR}/${CLIENT_NAME}.key)\n</key>\n\n"; \
+    printf "<tls-auth>\n$(cat ${TLS_KEY})\n</tls-auth>") \
+> ${OUTPUT_DIR}/${CLIENT_NAME}.ovpn
+
+echo "Inline configuration is here: ${OUTPUT_DIR}/${CLIENT_NAME}.ovpn"
+
+# Generate archive with configuration and certificates separately
+tar --transform 's/.*\///g' -czvf ${OUTPUT_DIR}/${CLIENT_NAME}.tar.gz ${CA_CERT} ${CERT_DIR}/${CLIENT_NAME}.crt ${KEY_DIR}/${CLIENT_NAME}.key ${TLS_KEY} ${BASE_CONFIG}
+echo "Configuration with certs is here: ${OUTPUT_DIR}/${CLIENT_NAME}.tar.gz"

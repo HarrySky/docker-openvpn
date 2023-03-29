@@ -1,0 +1,41 @@
+# {{ openvpn_server.network | ansible.utils.ipaddr('range_usable') }}
+server {{ openvpn_server.network | ansible.utils.ipaddr('network') }} {{ openvpn_server.network | ansible.utils.ipaddr('netmask') }}
+port {{ openvpn_server.port }}
+
+proto udp
+dev {{ openvpn_server.device }}
+topology subnet
+
+persist-key
+persist-tun
+
+client-to-client
+ifconfig-pool-persist /etc/openvpn/ipp.txt
+client-config-dir /etc/openvpn/ccd
+ccd-exclusive
+status /var/log/openvpn-status.log
+
+data-ciphers AES-256-GCM:AES-256-CBC
+auth SHA256
+
+keepalive 10 120
+max-clients 200
+user nobody
+group nogroup
+key-direction 0
+
+log /var/log/openvpn.log
+verb 3
+explicit-exit-notify 1
+
+crl-verify /etc/openvpn/pki/crl.pem
+ca /etc/openvpn/pki/ca.crt
+cert /etc/openvpn/pki/server.crt
+key /etc/openvpn/pki/server.key
+dh /etc/openvpn/pki/dh.pem
+tls-auth /etc/openvpn/pki/ta.key 0
+key-direction 0
+
+{% for directive in openvpn_server.other_directives %}
+{{ directive }}
+{% endfor %}
