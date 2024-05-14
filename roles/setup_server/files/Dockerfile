@@ -1,5 +1,5 @@
-FROM alpine:3.17.2
-LABEL maintainer="Igor Nehoroshev <igor.nehoroshev@martem.ee>"
+FROM alpine:3.19.1
+LABEL maintainer="Igor Nehoroshev <hi@neigor.me>"
 
 COPY startup /bin/startup
 WORKDIR /etc/openvpn
