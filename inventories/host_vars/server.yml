@@ -1,28 +1,51 @@
 openvpn_server:
+  # Name of your OpenVPN server. Must be unique, will be used
+  # in filesystem paths and as part of Docker container name
   name: "test"
+  # Domain or IP to use to connect to your OpenVPN server.
+  # Will be used in client configurations and as CN for server cert
   domain: "vpn.example.org"
+  # Port OpenVPN server should listen on.
+  # Will be exposed on your server and used in client configurations
   port: 12345
+  # OpenVPN network (OpenVPN server will be at first available IP in network)
   network: "10.22.33.0/24"
+  # Device that should be used for OpenVPN tunnel (can be tunX, where X is some numbers)
   device: "tun22.33"
   # Optional other directives, set to `[]` if not used
   other_directives:
-    # Send info that this OpenVPN server should route to home network
+    # Send info to clients that this OpenVPN server should route to home network
     - 'push "route 192.168.123.0 255.255.255.0"'
+    # Enable client-to-client communications
+    - 'client-to-client'
 
+# Configurations for OpenVPN clients
 openvpn_clients:
+  # Name of OpenVPN client (must be unique)
   - name: "pc-10.22.33.2"
+    # Static IP for OpenVPN client (must be unique)
     static_ip: "10.22.33.2"
-    # This PC should route to home network
+    # (optional iroute directive) This PC should route to home network
     iroute: "192.168.123.0 255.255.255.0"
-  - name: hacked-laptop
+    # (optional, not implemented) Whether this client is revoked (yes/no)
+    revoked: no
+  # Another OpenVPN client (example)
+  - name: "laptop-10.22.33.3"
     static_ip: "10.22.33.3"
-    revoked: yes
 
+# Variables for EasyRSA to use
 openvpn_vars:
+  # Country to set for issued certs and keys
   country: "EE"
+  # Province to set for issued certs and keys
   province: "Harjumaa"
+  # City to set for issued certs and keys
   city: "Tallinn"
+  # Organisation to set for issued certs and keys
   org: "Random Company"
+  # Email to set for issued certs and keys
   email: "vpn@example.org"
+  # Organisation unit to set for issued certs and keys
   ou: "Networking"
+  # Certificate Authority CN (MUST BE UNIQUE)
   ca_cn: "Test VPN CA"
