@@ -37,7 +37,7 @@
     git:
       repo: "https://github.com/OpenVPN/easy-rsa.git"
       dest: "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa"
-      version: "v3.1.2"
+      version: "v3.1.7"
 
   - name: "OpenVPN EasyRSA: Configure EasyRSA variables"
     template:
@@ -154,11 +154,6 @@
     mode: 0600
 
 - name: "Deploy OpenVPN"
-  community.docker.docker_compose:
-    project_name: "openvpn_{{ openvpn_server.name }}"
-    project_src: "/opt/docker_openvpn/{{ openvpn_server.name }}"
-    recreate: "{{ openvpn_server_config_template.changed | ternary('always', 'smart') }}"
-    pull: no
-    debug: yes
+  shell: "docker compose -p openvpn_{{ openvpn_server.name }} -f /opt/docker_openvpn/{{ openvpn_server.name }}/docker-compose.yml up -d {{ openvpn_server_config_template.changed | ternary('--force-recreate', '') }}"
 
 ...
