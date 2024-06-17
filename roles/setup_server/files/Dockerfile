@@ -1,4 +1,4 @@
-FROM alpine:3.19.1
+FROM alpine:3.20.0
 LABEL maintainer="Igor Nehoroshev <hi@neigor.me>"
 
 COPY startup /bin/startup
