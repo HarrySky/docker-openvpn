@@ -19,7 +19,7 @@ cd "/opt/docker_openvpn/{{ openvpn_server.name }}/easyrsa/easyrsa3"
 # Add static IP and iroute
 touch "/opt/docker_openvpn/{{ openvpn_server.name }}/ccd/${CLIENT_NAME}"
 echo "ifconfig-push ${CLIENT_STATIC_IP} {{ openvpn_server.network | ansible.utils.ipaddr('netmask') }}" > "/opt/docker_openvpn/{{ openvpn_server.name }}/ccd/${CLIENT_NAME}"
-echo "${CLIENT_IROUTE}" >> "/opt/docker_openvpn/{{ openvpn_server.name }}/ccd/${CLIENT_NAME}"
+echo "iroute ${CLIENT_IROUTE}" >> "/opt/docker_openvpn/{{ openvpn_server.name }}/ccd/${CLIENT_NAME}"
 chmod 644 "/opt/docker_openvpn/{{ openvpn_server.name }}/ccd/${CLIENT_NAME}"
 
 # Generate inline configuration
