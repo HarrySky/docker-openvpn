@@ -70,6 +70,10 @@ ansible-playbook -i inventories/SERVER -e "HOSTS=all" gen_client_conf.yml -vv
 
 It should check all your clients and generate certificates and configs for new ones.
 
-If everything went well you can get configuration from server using SCP (**replace UPPERCASED values**):
+It can also fetch configurations into your home directory if you append `--tags "copy-all"` to the command above.
+
+If you only need `.ovpn` or `.tar.gz` files - use `--tags "copy-ovpn"` or `--tags "copy-archive"` respectively.
+
+You can also manually get configuration from server using SCP (**replace UPPERCASED values**):
 - inline `.ovpn` config: `scp ANSIBLE_USER@ANSIBLE_HOST:/opt/docker_openvpn/OPENVPN_SERVER_NAME/clients/CLIENT_NAME.ovpn ~/`
 - all files `.tar.gz` archive: `scp ANSIBLE_USER@ANSIBLE_HOST:/opt/docker_openvpn/OPENVPN_SERVER_NAME/clients/CLIENT_NAME.tar.gz ~/`

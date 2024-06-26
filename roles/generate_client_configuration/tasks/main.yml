@@ -1,6 +1,8 @@
 ---
 
 - name: "Manage OpenVPN clients' configurations"
+  tags:
+  - always
   block:
   - name: "Generate base client configuration"
     template:
@@ -27,5 +29,38 @@
       chdir: "/opt/docker_openvpn/{{ openvpn_server.name }}"
       creates: "clients/{{ item.name }}.tar.gz"
     loop: "{{ openvpn_clients }}"
+    register: clients_gen_output
+
+- name: Copy ovpn config from server (if requested)
+  tags:
+  - never
+  - copy-all
+  - copy-ovpn
+  block:
+    - name: Copy ovpn config from server
+      when: "gen_output.changed and gen_output.rc == 0 and 'Inline configuration is here' in gen_output.stdout"
+      ansible.builtin.fetch:
+        src: /opt/docker_openvpn/{{ openvpn_server.name }}/clients/{{ gen_output.item.name }}.ovpn
+        dest: "{{ lookup('env', 'HOME') }}/"
+        flat: yes
+      loop: "{{ clients_gen_output.results | default([]) }}"
+      loop_control:
+        loop_var: gen_output
+
+- name: "Copy archive with config files from server (if requested)"
+  tags:
+  - never
+  - copy-all
+  - copy-archive
+  block:
+    - name: "Copy archive with config files from server"
+      when: "gen_output.changed and gen_output.rc == 0 and 'Configuration with certs is here' in gen_output.stdout"
+      ansible.builtin.fetch:
+        src: /opt/docker_openvpn/{{ openvpn_server.name }}/clients/{{ gen_output.item.name }}.tar.gz
+        dest: "{{ lookup('env', 'HOME') }}/"
+        flat: yes
+      loop: "{{ clients_gen_output.results | default([]) }}"
+      loop_control:
+        loop_var: gen_output
 
 ...

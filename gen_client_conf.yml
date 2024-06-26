@@ -6,6 +6,8 @@
 # ansible-playbook -i inventories/server -e "HOSTS=all" gen_client_conf.yml -vv
 # - if sudo password is needed on server (-K flag tells Ansible to ask for password):
 # ansible-playbook -K -i inventories/server -e "HOSTS=all" gen_client_conf.yml -vv
+# - if you want to fetch generated configurations (.ovpn and .tar.gz, if only one needed - use "copy-ovpn" or "copy-archive" tag)
+# ansible-playbook -i inventories/server -e "HOSTS=all" gen_client_conf.yml -vv --tags "copy-all"
 
 - name: "Setup OpenVPN server"
   hosts: "{{ HOSTS }}"
