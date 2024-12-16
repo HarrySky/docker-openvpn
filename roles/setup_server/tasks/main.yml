@@ -124,12 +124,6 @@
       state: directory
       mode: 0700
 
-  - name: "OpenVPN Build Files: copy startup script"
-    copy:
-      src: "files/startup"
-      dest: "/opt/docker_openvpn/build/startup"
-      mode: 0700
-
   - name: "OpenVPN Build Files: copy Dockerfile"
     copy:
       src: "files/Dockerfile"

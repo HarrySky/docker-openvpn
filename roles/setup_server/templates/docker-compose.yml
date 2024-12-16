@@ -17,6 +17,9 @@ services:
     cap_add:
       # Container need this capability to create tunnel
       - NET_ADMIN
+    devices:
+      # Needed since runc v1.2
+      - /dev/net/tun
     network_mode: host
     logging:
       driver: local
