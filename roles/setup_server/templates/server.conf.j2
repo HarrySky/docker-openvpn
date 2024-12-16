@@ -2,9 +2,13 @@
 server {{ openvpn_server.network | ansible.utils.ipaddr('network') }} {{ openvpn_server.network | ansible.utils.ipaddr('netmask') }}
 port {{ openvpn_server.port }}
 
-proto udp
+proto {{ openvpn_server.proto }}
 dev {{ openvpn_server.device }}
 topology subnet
+{% if openvpn_server.proto == 'tcp' %}
+# Reduce latency for TCP tunnel
+socket-flags TCP_NODELAY
+{% endif %}
 
 persist-key
 persist-tun
@@ -21,7 +25,6 @@ keepalive 10 120
 max-clients 200
 user nobody
 group nogroup
-key-direction 0
 
 log /var/log/openvpn.log
 verb 3

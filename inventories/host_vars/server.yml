@@ -8,6 +8,8 @@ openvpn_server:
   # Port OpenVPN server should listen on.
   # Will be exposed on your server and used in client configurations
   port: 12345
+  # Protocol to use for OpenVPN tunnel (tcp can lead to TCP Meltdown, udp is recommended)
+  proto: "udp"
   # OpenVPN network (OpenVPN server will be at first available IP in network)
   network: "10.22.33.0/24"
   # Device that should be used for OpenVPN tunnel (can be tunX, where X is some numbers)

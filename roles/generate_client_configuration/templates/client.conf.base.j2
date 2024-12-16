@@ -2,7 +2,12 @@ remote {{ openvpn_server.domain }} {{ openvpn_server.port }}
 
 client
 dev tun
-proto udp
+proto {{ openvpn_server.proto }}
+{% if openvpn_server.proto == 'tcp' %}
+# Reduce latency for TCP tunnel
+socket-flags TCP_NODELAY
+{% endif %}
+
 resolv-retry infinite
 persist-key
 persist-tun
